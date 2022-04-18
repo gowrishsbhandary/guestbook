@@ -1,5 +1,6 @@
 package com.bt.guestbook.security;
 
+import com.bt.guestbook.service.LoginService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -19,10 +20,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     "/swagger-ui/**", "/swagger-resources/**", "/v2/api-docs", "/index.html"
   };
 
-  private final UserPrincipalDetailsService userPrincipalDetailsService;
+  private final LoginService loginService;
 
-  public SecurityConfiguration(UserPrincipalDetailsService userPrincipalDetailsService) {
-    this.userPrincipalDetailsService = userPrincipalDetailsService;
+  public SecurityConfiguration(LoginService loginService) {
+    this.loginService = loginService;
   }
 
   @Override
@@ -63,7 +64,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
   DaoAuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
     daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-    daoAuthenticationProvider.setUserDetailsService(this.userPrincipalDetailsService);
+    daoAuthenticationProvider.setUserDetailsService(this.loginService);
 
     return daoAuthenticationProvider;
   }

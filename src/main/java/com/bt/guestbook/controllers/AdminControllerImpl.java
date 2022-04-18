@@ -32,13 +32,14 @@ public class AdminControllerImpl implements AdminController {
       RedirectAttributes redirectAttributes) {
     try {
       log.info("AdminController: approveEntry - Start");
-      guestBookEntryService.approveOrRejectEntry(guestBookEntryDto);
+      GuestBookEntryDto guestBookEntry =
+          guestBookEntryService.approveOrRejectEntry(guestBookEntryDto);
       List<GuestBookEntryDto> guestBookEntries = guestBookEntryService.getAllEntries();
       model.addAttribute("guestBookEntries", guestBookEntries);
-      if (guestBookEntryDto.isApproved()) {
+      if (guestBookEntry.isApproved()) {
         redirectAttributes.addFlashAttribute("approved", "Entry approved successfully!");
       }
-      if (guestBookEntryDto.isRejected()) {
+      if (guestBookEntry.isRejected()) {
         redirectAttributes.addFlashAttribute("rejected", "Entry deleted successfully!");
       }
     } catch (NotFoundException ne) {

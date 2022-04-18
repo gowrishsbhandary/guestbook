@@ -17,16 +17,7 @@ public interface GuestBookEntryController {
   String guestBook(Model model, @ModelAttribute(value = "entryId") String entryId);
 
   @PostMapping("entry")
-  String addEntry(
-      @AuthenticationPrincipal User user,
-      GuestBookEntryDto guestBookEntryDto,
-      @RequestParam("file") MultipartFile file,
-      RedirectAttributes redirectAttributes,
-      Model model)
-      throws IllegalAccessException, DataFormatException;
-
-  @PostMapping("updateEntry")
-  String updateEntry(
+  String entry(
       @AuthenticationPrincipal User user,
       GuestBookEntryDto guestBookEntryDto,
       @RequestParam("file") MultipartFile file,

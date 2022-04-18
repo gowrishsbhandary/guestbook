@@ -8,6 +8,7 @@
 <div class="alert alert-primary" role="alert" th:if="${success}" th:text="${success}"></div>
 <div class="alert alert-danger" role="alert" th:if="${error}" th:text="${error}"></div>
 <div class="alert alert-danger" role="alert" th:if="${multiContent}" th:text="${multiContent}"></div>
+<div class="alert alert-danger" role="alert" th:if="${invalidImage}" th:text="${invalidImage}"></div>
 <form class="col card p-3 mb-5" enctype="multipart/form-data" method="post" th:action="@{/entry}"
       th:object="${guestBookEntryDto}">
     <div class="form-group">

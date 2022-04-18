@@ -7,24 +7,20 @@ import com.bt.guestbook.repo.GuestBookRepository;
 import com.bt.guestbook.repo.UserRepository;
 import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GuestBookEntryService {
 
   private final GuestBookRepository guestBookRepository;
@@ -42,8 +38,7 @@ public class GuestBookEntryService {
     GuestBookEntry guestBookEntry = convertToEntity(guestBookEntryDto);
     User user = userRepository.findByUsername(username);
     guestBookEntry.setUser(user);
-    guestBookEntry = this.guestBookRepository.saveAndFlush(guestBookEntry);
-    return convertToDto(guestBookEntry);
+    return convertToDto(guestBookRepository.saveAndFlush(guestBookEntry));
   }
 
   public List<GuestBookEntryDto> getAllEntries() {
@@ -56,7 +51,8 @@ public class GuestBookEntryService {
             .collect(Collectors.toList());
   }
 
-  public void approveOrRejectEntry(GuestBookEntryDto guestBookEntryDto) throws NotFoundException {
+  public GuestBookEntryDto approveOrRejectEntry(GuestBookEntryDto guestBookEntryDto)
+      throws NotFoundException {
     Optional<GuestBookEntry> optionalGuestBook =
         guestBookRepository.findById(guestBookEntryDto.getId());
     if (!optionalGuestBook.isPresent()) throw new NotFoundException("No data found");
@@ -68,16 +64,14 @@ public class GuestBookEntryService {
       guestBookEntry.setRejected(guestBookEntryDto.isRejected());
     }
     guestBookEntry = guestBookRepository.saveAndFlush(guestBookEntry);
-    convertToDto(guestBookEntry);
+    return convertToDto(guestBookEntry);
   }
 
-  public GuestBookEntryDto uploadImage(MultipartFile multipartFile, String username)
+  private GuestBookEntryDto uploadImage(MultipartFile multipartFile, String username)
       throws IOException {
-    File file = convertMultiPartToFile(multipartFile);
-    BufferedImage image = ImageIO.read(file);
-    ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
-    ImageIO.write(image, "png", byteArray);
-    String url = fileStorageService.uploadImage(byteArray.toByteArray());
+    String url =
+        fileStorageService.uploadImage(
+            fileStorageService.prepareImageForUpload(multipartFile).toByteArray());
     GuestBookEntry guestBookEntry = new GuestBookEntry();
     guestBookEntry.setContent(url);
     guestBookEntry.setImage(true);
@@ -87,24 +81,24 @@ public class GuestBookEntryService {
     return convertToDto(guestBookEntry);
   }
 
-  public void update(GuestBookEntryDto guestBookEntryDto) throws DataFormatException {
-    if (guestBookEntryDto == null
-        || guestBookEntryDto.getId() < 0
-        || guestBookEntryDto.getContent() == null) throw new DataFormatException("Data invalid");
-    GuestBookEntry guestBookEntry = convertToEntity(guestBookEntryDto);
+  private GuestBookEntryDto update(GuestBookEntryDto guestBookEntryDto) throws NotFoundException {
+    Optional<GuestBookEntry> optionalGuestBook =
+        guestBookRepository.findById(guestBookEntryDto.getId());
+    if (!optionalGuestBook.isPresent()) throw new NotFoundException("No data found");
+
+    GuestBookEntry guestBookEntry = optionalGuestBook.get();
+    guestBookEntry.setContent(guestBookEntryDto.getContent());
     guestBookEntry = guestBookRepository.saveAndFlush(guestBookEntry);
-    convertToDto(guestBookEntry);
+    return convertToDto(guestBookEntry);
   }
 
-  public GuestBookEntryDto updateImage(MultipartFile multipartFile, long entryID)
+  private GuestBookEntryDto updateImage(MultipartFile multipartFile, long entryID)
       throws IOException, NotFoundException {
     Optional<GuestBookEntry> optionalGuestBookEntry = guestBookRepository.findById(entryID);
     if (!optionalGuestBookEntry.isPresent()) throw new NotFoundException("No data found");
-    File file = convertMultiPartToFile(multipartFile);
-    BufferedImage image = ImageIO.read(file);
-    ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
-    ImageIO.write(image, "png", byteArray);
-    String url = fileStorageService.uploadImage(byteArray.toByteArray());
+    String url =
+        fileStorageService.uploadImage(
+            fileStorageService.prepareImageForUpload(multipartFile).toByteArray());
     GuestBookEntry guestBookEntry = optionalGuestBookEntry.get();
     guestBookEntry.setContent(url);
     guestBookEntry.setImage(true);
@@ -112,12 +106,24 @@ public class GuestBookEntryService {
     return convertToDto(guestBookEntry);
   }
 
-  private File convertMultiPartToFile(MultipartFile file) throws IOException {
-    File convFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
-    try (FileOutputStream fos = new FileOutputStream(convFile)) {
-      fos.write(file.getBytes());
+  public GuestBookEntryDto createOrUpdateEntry(
+      User user, GuestBookEntryDto guestBookEntryDto, MultipartFile file)
+      throws IOException, NotFoundException, DataFormatException {
+    GuestBookEntryDto guestBookEntry;
+    if (guestBookEntryDto.getId() > 0) {
+      log.info("Update an entry...... !");
+      guestBookEntry =
+          !file.isEmpty()
+              ? updateImage(file, guestBookEntryDto.getId())
+              : update(guestBookEntryDto);
+
+    } else {
+      log.info("Add an entry...... !");
+      String userName = user.getUsername();
+      guestBookEntry =
+          !file.isEmpty() ? uploadImage(file, userName) : create(guestBookEntryDto, userName);
     }
-    return convFile;
+    return guestBookEntry;
   }
 
   private GuestBookEntryDto convertToDto(GuestBookEntry guestBookEntry) {

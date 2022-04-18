@@ -4,15 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Base64;
+import java.util.Objects;
 
 @Service
 public class FileStorageService {
@@ -53,5 +54,22 @@ public class FileStorageService {
     return node.get("data") != null && node.get("data").get("link") != null
         ? node.get("data").get("link").asText()
         : null;
+  }
+
+  public ByteArrayOutputStream prepareImageForUpload(MultipartFile multipartFile)
+      throws IOException {
+    File file = convertMultiPartToFile(multipartFile);
+    BufferedImage image = ImageIO.read(file);
+    ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
+    ImageIO.write(image, "png", byteArray);
+    return byteArray;
+  }
+
+  private File convertMultiPartToFile(MultipartFile file) throws IOException {
+    File convFile = new File(Objects.requireNonNull(file.getOriginalFilename()));
+    try (FileOutputStream fos = new FileOutputStream(convFile)) {
+      fos.write(file.getBytes());
+    }
+    return convFile;
   }
 }

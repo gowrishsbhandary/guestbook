@@ -1,4 +1,4 @@
-package com.bt.guestbook.security;
+package com.bt.guestbook.service;
 
 import com.bt.guestbook.model.CustomUserDetails;
 import com.bt.guestbook.model.User;
@@ -9,10 +9,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserPrincipalDetailsService implements UserDetailsService {
+public class LoginService implements UserDetailsService {
   private final UserRepository userRepository;
 
-  public UserPrincipalDetailsService(UserRepository userRepository) {
+  public LoginService(UserRepository userRepository) {
     this.userRepository = userRepository;
   }
 

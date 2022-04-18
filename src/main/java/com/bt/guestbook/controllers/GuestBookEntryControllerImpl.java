@@ -3,6 +3,7 @@ package com.bt.guestbook.controllers;
 import com.bt.guestbook.dto.GuestBookEntryDto;
 import com.bt.guestbook.model.User;
 import com.bt.guestbook.service.GuestBookEntryService;
+import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -33,62 +34,38 @@ public class GuestBookEntryControllerImpl implements GuestBookEntryController {
   }
 
   @Override
-  public String addEntry(
+  public String entry(
       User user,
       GuestBookEntryDto guestBookEntryDto,
       MultipartFile file,
       RedirectAttributes redirectAttributes,
       Model model) {
     try {
-      log.info("Adding an entry");
+      log.info("Entry begins...... !");
       if (StringUtils.hasText(guestBookEntryDto.getContent()) && !file.isEmpty()) {
         redirectAttributes.addFlashAttribute(ERROR_MULTI_CONTENT_KEY, ERROR_MULTI_CONTENT_VALUE);
-        return REDIRECT_GUEST_BOOK;
+        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
       }
-      GuestBookEntryDto guestBookEntry;
-      String userName = user.getUsername();
-      if (!file.isEmpty()) {
-        guestBookEntry = guestBookEntryService.uploadImage(file, userName);
+      if (!isValidImageType(file)) {
+        redirectAttributes.addFlashAttribute(ERROR_INVALID_IMAGE_TYPE_KEY, ERROR_INVALID_IMAGE_TYPE_VALUE);
+        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
       } else {
-        guestBookEntry = guestBookEntryService.create(guestBookEntryDto, userName);
+        GuestBookEntryDto guestBookEntry =
+            guestBookEntryService.createOrUpdateEntry(user, guestBookEntryDto, file);
+        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntry);
+        redirectAttributes.addFlashAttribute(SUCCESS_KEY, SUCCESS_VALUE);
       }
-
-      model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntry);
-      redirectAttributes.addFlashAttribute(SUCCESS_KEY, SUCCESS_VALUE);
-    } catch (IOException | DataFormatException e) {
+    } catch (IOException | DataFormatException | NotFoundException e) {
       e.printStackTrace();
       redirectAttributes.addFlashAttribute(ERROR_KEY, ERROR_VALUE);
     }
     return REDIRECT_GUEST_BOOK;
   }
 
-  @Override
-  public String updateEntry(
-      User user,
-      GuestBookEntryDto guestBookEntryDto,
-      MultipartFile file,
-      RedirectAttributes redirectAttributes,
-      Model model) {
-    try {
-      log.info("Adding an entry");
-      if (StringUtils.hasText(guestBookEntryDto.getContent()) && !file.isEmpty()) {
-        redirectAttributes.addFlashAttribute(ERROR_MULTI_CONTENT_KEY, ERROR_MULTI_CONTENT_VALUE);
-        return REDIRECT_GUEST_BOOK;
-      }
-      GuestBookEntryDto guestBookEntry;
-      String userName = user.getUsername();
-      if (!file.isEmpty()) {
-        guestBookEntry = guestBookEntryService.uploadImage(file, userName);
-      } else {
-        guestBookEntry = guestBookEntryService.create(guestBookEntryDto, userName);
-      }
-
-      model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntry);
-      redirectAttributes.addFlashAttribute(SUCCESS_KEY, SUCCESS_VALUE);
-    } catch (IOException | DataFormatException e) {
-      e.printStackTrace();
-      redirectAttributes.addFlashAttribute(ERROR_KEY, ERROR_VALUE);
-    }
-    return REDIRECT_GUEST_BOOK;
+  public boolean isValidImageType(MultipartFile multipartFile) {
+    String contentType = multipartFile.getContentType();
+    return contentType.equals("image/png")
+        || contentType.equals("image/jpg")
+        || contentType.equals("image/jpeg");
   }
 }
