@@ -35,7 +35,7 @@ Page view :
 ![image](https://user-images.githubusercontent.com/27283103/163860348-56ae3b53-9e9e-44fb-b038-27d193844195.png)
 
 * Admin Dashboard :
-![image](https://user-images.githubusercontent.com/27283103/163860501-02b2e9fd-bc30-4bcd-a8b2-73aeffe44bef.png)
+* ![image](https://user-images.githubusercontent.com/27283103/163861769-924c48e7-ce3d-4765-890c-8ae942ff1e00.png)
 
 Scope to improvement:
 * Swagger Integration
