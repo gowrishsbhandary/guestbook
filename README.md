@@ -1,4 +1,4 @@
-# guestbook**Guestbook**
+# **Guestbook**
 
 Welcome to the guest book wiki!
 
