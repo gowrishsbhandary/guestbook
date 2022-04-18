@@ -12,6 +12,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+import static com.bt.guestbook.util.GuestBookConstant.ADMIN;
+import static com.bt.guestbook.util.GuestBookConstant.REDIRECT_ADMIN;
+
 @Controller
 @Slf4j
 @RequiredArgsConstructor
@@ -23,28 +26,27 @@ public class AdminControllerImpl implements AdminController {
     log.info("AdminController: getAllEntries - Start");
     List<GuestBookEntryDto> guestBookEntries = guestBookEntryService.getAllEntries();
     model.addAttribute("guestBookEntries", guestBookEntries);
-    return "admin";
+    return ADMIN;
   }
 
   public String approveOrRejectEntry(
       @ModelAttribute(value = "guestBookEntryDto") GuestBookEntryDto guestBookEntryDto,
       Model model,
-      RedirectAttributes redirectAttributes) {
-    try {
-      log.info("AdminController: approveEntry - Start");
-      GuestBookEntryDto guestBookEntry =
-          guestBookEntryService.approveOrRejectEntry(guestBookEntryDto);
-      List<GuestBookEntryDto> guestBookEntries = guestBookEntryService.getAllEntries();
-      model.addAttribute("guestBookEntries", guestBookEntries);
-      if (guestBookEntry.isApproved()) {
-        redirectAttributes.addFlashAttribute("approved", "Entry approved successfully!");
-      }
-      if (guestBookEntry.isRejected()) {
-        redirectAttributes.addFlashAttribute("rejected", "Entry deleted successfully!");
-      }
-    } catch (NotFoundException ne) {
-      redirectAttributes.addFlashAttribute("error", "Something isn't right!");
+      RedirectAttributes redirectAttributes)
+      throws NotFoundException {
+
+    log.info("AdminController: approveEntry - Start");
+    GuestBookEntryDto guestBookEntry =
+        guestBookEntryService.approveOrRejectEntry(guestBookEntryDto);
+    List<GuestBookEntryDto> guestBookEntries = guestBookEntryService.getAllEntries();
+    model.addAttribute("guestBookEntries", guestBookEntries);
+    if (guestBookEntry.isApproved()) {
+      redirectAttributes.addFlashAttribute("approved", "Entry approved successfully!");
     }
-    return "redirect:admin";
+    if (guestBookEntry.isRejected()) {
+      redirectAttributes.addFlashAttribute("rejected", "Entry deleted successfully!");
+    }
+
+    return REDIRECT_ADMIN;
   }
 }

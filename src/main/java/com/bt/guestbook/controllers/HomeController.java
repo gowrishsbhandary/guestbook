@@ -3,11 +3,14 @@ package com.bt.guestbook.controllers;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@RequestMapping("/")
+import static com.bt.guestbook.util.GuestBookConstant.*;
+
+@RequestMapping(ROOT)
 public interface HomeController {
-  @GetMapping("index")
+
+  @GetMapping(INDEX)
   String index();
 
-  @GetMapping("login")
+  @GetMapping(LOGIN)
   String login();
 }

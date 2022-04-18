@@ -39,33 +39,31 @@ public class GuestBookEntryControllerImpl implements GuestBookEntryController {
       GuestBookEntryDto guestBookEntryDto,
       MultipartFile file,
       RedirectAttributes redirectAttributes,
-      Model model) {
-    try {
-      log.info("Entry begins...... !");
-      if (StringUtils.hasText(guestBookEntryDto.getContent()) && !file.isEmpty()) {
-        redirectAttributes.addFlashAttribute(ERROR_MULTI_CONTENT_KEY, ERROR_MULTI_CONTENT_VALUE);
-        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
-      }
-      if (!isValidImageType(file)) {
-        redirectAttributes.addFlashAttribute(ERROR_INVALID_IMAGE_TYPE_KEY, ERROR_INVALID_IMAGE_TYPE_VALUE);
-        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
-      } else {
-        GuestBookEntryDto guestBookEntry =
-            guestBookEntryService.createOrUpdateEntry(user, guestBookEntryDto, file);
-        model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntry);
-        redirectAttributes.addFlashAttribute(SUCCESS_KEY, SUCCESS_VALUE);
-      }
-    } catch (IOException | DataFormatException | NotFoundException e) {
-      e.printStackTrace();
-      redirectAttributes.addFlashAttribute(ERROR_KEY, ERROR_VALUE);
+      Model model)
+      throws DataFormatException, NotFoundException, IOException {
+
+    log.info("Entry begins...... !");
+    if (StringUtils.hasText(guestBookEntryDto.getContent()) && !file.isEmpty()) {
+      redirectAttributes.addFlashAttribute(ERROR_MULTI_CONTENT_KEY, ERROR_MULTI_CONTENT_VALUE);
+      model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
+    }
+    if (!file.isEmpty() && !isValidImageType(file)) {
+      redirectAttributes.addFlashAttribute(
+          ERROR_INVALID_IMAGE_TYPE_KEY, ERROR_INVALID_IMAGE_TYPE_VALUE);
+      model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntryDto);
+    } else {
+      GuestBookEntryDto guestBookEntry =
+          guestBookEntryService.createOrUpdateEntry(user, guestBookEntryDto, file);
+      model.addAttribute(GUEST_BOOK_ENTRY_DTO, guestBookEntry);
+      redirectAttributes.addFlashAttribute(SUCCESS_KEY, SUCCESS_VALUE);
     }
     return REDIRECT_GUEST_BOOK;
   }
 
   public boolean isValidImageType(MultipartFile multipartFile) {
     String contentType = multipartFile.getContentType();
-    return contentType.equals("image/png")
-        || contentType.equals("image/jpg")
-        || contentType.equals("image/jpeg");
+    return StringUtils.hasText(contentType) && (contentType.equals("image/png")
+            || contentType.equals("image/jpg")
+            || contentType.equals("image/jpeg"));
   }
 }
